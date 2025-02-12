@@ -1,62 +1,90 @@
-# Imports
+
 import streamlit as st
 import pandas as pd
 import pickle
+import os
+import streamlit as st
 
-# setting the basic configuration of the web app. This is shown in the Tab
-st.set_page_config(page_title = "Sales Prediction" 
-                    ,page_icon = ":bar_chart:" 
-                    )
+st.set_page_config(page_title="Sales Prediction", page_icon=":bar_chart:")
 
-# Opening intro text
-st.write("# Predict Sales✨")
+st.markdown("""
+    <style>
+        /* Center align title */
+        h1 {
+            text-align: center;
+            color: #1D3557;
+        }
+        
+        /* Style the input boxes */
+        .stNumberInput, .stTextInput {
+            border: 2px solid #1D3557;
+            border-radius: 8px;
+            padding: 10px;
+        }
 
-with st.expander("About this app"):
+        /* Style the sidebar */
+        .stSidebar {
+            background-color: #F1F4F8;
+            padding: 20px;
+        }
+        
+        /* Style the buttons */
+        .stButton>button {
+            background-color: #1D3557;
+            color: white;
+            border-radius: 8px;
+            font-size: 16px;
+            padding: 10px 20px;
+        }
 
-    st.write("")
+        .stButton>button:hover {
+            background-color: #457B9D;
+        }
 
-    st.markdown(
-        """
-
-    This is a simulated dataset for a Case Study to demonstrate the usage of Linear Regression to solve business problem. 
-    
-    The data spans 24 months and has `unit sales` along with the `price`, `advertisment spend` and `promotion spend`
-    
-    The predictions are based on a Linear Regression model . It is used to establish the relationship between the independent variables (price, promotion and advertisment) to predict the unit sales for each given scenario.
-    
-    """
-    )
-
-st.write("### Determine the scenario 🎛️:")
-
-# Price of the product
-price = st.slider('💲 Price of the product?', min_value=1, max_value=15, value=7, step=1)
-
-# Advertisment budget
-ads = st.slider('📢 What is the Adv budget?', min_value=35, max_value=65, value=50, step = 1)
+        /* Boxed layout for sections */
+        .box {
+            background-color: #F1F4F8;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+            margin: 20px 0px;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
 
-# Promotions
-promo = st.slider('💥 What is the promotional budget?', min_value=35, max_value=65, value=45, step = 1)
+st.write("# Sales Prediction")
+
+product_name = st.text_input(" Type of product:", placeholder="Enter product name")
+
+if product_name:
+    st.write(f"**You entered:** {product_name}")
+
+price = st.number_input(' Price of the product?', min_value=1, max_value=15, value=7, step=1)
+ads = st.number_input(' What is the Advertisement Budget?', min_value=35, max_value=65, value=50, step=1)
+promo = st.number_input(' What is the promotional budget?', min_value=35, max_value=65, value=45, step=1)
 
 
-# Creating the dataframe to run predictions on
-row = [price, ads, promo]
-columns = ['dollar_price', 'advertisment', 'promotions']
+mktg_scenario = pd.DataFrame({'dollar_price': [price], 'advertisment': [ads], 'promotions': [promo]})
 
-mktg_scenario = pd.DataFrame(dict(zip(columns, row)), index=[0])
 
-# Show the table?
 st.table(mktg_scenario)
 
-# Now predicting!
-if st.button(label="Click to predict unit sales"):
 
-    # Load the model
-    loaded_model = pickle.load(open('lm_model_prediction.sav','rb'))
+if st.button("Click to predict unit sales"):
+    model_path = 'lm_model_prediction.sav'
     
-    # Make predictions (and get out pred probabilities)
-    pred = loaded_model.predict(mktg_scenario)[0]
-    
-    st.write(f"Predicted Unit Sales💰: {pred:,.0f} units ")
+    if os.path.exists(model_path):  
+        try:
+            with open(model_path, 'rb') as file:
+                loaded_model = pickle.load(file)
+            
+            
+            pred = loaded_model.predict(mktg_scenario)[0]
+            st.write(f"Predicted Unit Sales: {pred:,.0f} units")
+        except Exception as e:
+            st.error(f"Error loading model: {e}")
+    else:
+        st.error("Model file not found. Please ensure 'lm_model_prediction.sav' is in the correct directory.")
+
 
